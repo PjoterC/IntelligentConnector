@@ -54,12 +54,12 @@ public static class CatEndpoints
             {
                 var fact = new CatFact("0", "You haven't asked for any cat facts yet, so I have nothing to remember.");
                 var img = await connector.GetCatImageAsync(fact);
-                return Results.Ok(img);
+                return Results.File(img.ImageStream, "image/png");
             }
             var random = new Random();
             var factToRemember = existingRecords[random.Next(existingRecords.Count)];
             var image = await connector.GetCatImageAsync(factToRemember);
-            return Results.Ok(image);
+            return Results.File(image.ImageStream, "image/png");
         }).WithName("RememberCatFact");
 
 
