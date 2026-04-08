@@ -21,13 +21,18 @@ public class ApiEntry
 
 public class CatFact
 {
+    public CatFact(string id, string text)
+    {
+        Id = id;
+        Text = text;
+        Length = text.Length;
+    }
     public string Id { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
-    public string Type { get; set; } = string.Empty;
+    public int Length { get; set; }
 }
 
 public class CatImage
 {
-    public string Id { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
+    public Stream ImageStream { get; set; } = Stream.Null;
 }

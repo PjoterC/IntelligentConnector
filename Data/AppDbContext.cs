@@ -5,5 +5,5 @@ namespace IntelligentConnector.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<RestfulApiRecord> RestfulApiRecords { get; set; }
+    public DbSet<CatFact> CatFacts { get; set; }
 }

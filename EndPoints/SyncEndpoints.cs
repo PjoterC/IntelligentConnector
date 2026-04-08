@@ -4,89 +4,107 @@ using IntelligentConnector.Core.Interfaces;
 using IntelligentConnector.Core.Models;
 using IntelligentConnector.Data;
 
+
 namespace IntelligentConnector.Endpoints;
 
 public static class CatEndpoints
 {
-    
+    public static void MapCatEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/cat");
+
+        group.MapGet("/newfact", async ([FromServices] IPublicApiConnector connector,  [FromServices] AppDbContext db) =>
+        {
+            var existingRecords = await db.CatFacts.ToListAsync();
+            var existingIDs = existingRecords.Select(r => r.Id).ToHashSet();
+
+            var fact = await connector.GetCatFactAsync();
+            int attempts = 0;
+            
+            const int maxAttempts = 3;
+            while (existingIDs.Contains(fact.Id))
+            {
+                fact = await connector.GetCatFactAsync();
+                if (++attempts >= maxAttempts)
+                {
+                    db.CatFacts.RemoveRange(existingRecords);
+                    await db.SaveChangesAsync();
+                    fact.Text = "You wanted to remember more facts than a mere mortal can handle, so I purged your memory.";
+                    var img = await connector.GetCatImageAsync(fact);
+                    return Results.File(img.ImageStream, "image/png");
+                    
+                }
+                
+            }
+            fact.Length = fact.Text.Length;
+            db.CatFacts.Add(fact);
+            await db.SaveChangesAsync();
+
+            var image = await connector.GetCatImageAsync(fact);
+            return Results.File(image.ImageStream, "image/png");
+
+
+        })
+        .WithName("GetCatFact");
+
+        group.MapGet("/rememberfact", async ([FromServices] IPublicApiConnector connector, [FromServices] AppDbContext db) =>
+        {
+            var existingRecords = await db.CatFacts.ToListAsync();
+            if (!existingRecords.Any())
+            {
+                var fact = new CatFact("0", "You haven't asked for any cat facts yet, so I have nothing to remember.");
+                var img = await connector.GetCatImageAsync(fact);
+                return Results.Ok(img);
+            }
+            var random = new Random();
+            var factToRemember = existingRecords[random.Next(existingRecords.Count)];
+            var image = await connector.GetCatImageAsync(factToRemember);
+            return Results.Ok(image);
+        }).WithName("RememberCatFact");
+
+
+        
+
+        
+    }
 }
 
-public static class SyncEndpoints
-{
-    // public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
-    // {
-    //     var group = app.MapGroup("/sync");
+// public static class SyncEndpoints
+// {
+//     public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
+//     {
+//         var group = app.MapGroup("/sync");
 
-    //     // POST /sync - Triggers the process of fetching and updating data
-    //     group.MapPost("/", async ([FromServices] IPublicApiConnector connector, [FromServices] AppDbContext db) =>
-    //     {
-    //         try 
-    //         {
-    //             // 1. Fetching data from the external API
-    //             var dataFromApi = await connector.GetExternalDataAsync();
+//         group.MapGet("/fact", async ([FromServices] IPublicApiConnector connector) =>
+//         {
+//             var fact = await connector.GetCatFactAsync();
+//             return Results.Ok(fact);
+//         })
+//         .WithName("GetCatFact");
 
-    //             if (dataFromApi == null || dataFromApi.Count == 0)
-    //             {
-    //                 return Results.NotFound("No data found.");
-    //             }
+//         group.MapGet("/image", async ([FromServices] IPublicApiConnector connector) =>
+//         {
+//             var image = await connector.GetCatImageAsync();
+//             return Results.Ok(image);
+//         })
+//         .WithName("GetCatImage");
 
-    //             // 2. Retrieving all IDs from the incoming data
-    //             var incomingExternalIds = dataFromApi.Select(a => a.id).ToList();
+//         group.MapPost("/save", async ([FromServices] IPublicApiConnector connector, [FromServices] AppDbContext db) =>
+//         {
+//             var fact = await connector.GetCatFactAsync();
+//             var image = await connector.GetCatImageAsync();
 
-    //             // 3. Retrieving existing records from the database for comparison (Upsert)
-    //             var existingRecords = await db.RestfulApiRecords
-    //                 .Where(r => incomingExternalIds.Contains(r.id))
-    //                 .ToDictionaryAsync(r => r.id);
+//             db.CatFacts.Add(fact);
+//             db.CatImages.Add(image);
+//             await db.SaveChangesAsync();
 
-    //             int updatedCount = 0;
-    //             int createdCount = 0;
-
-    //             foreach (var apiRec in dataFromApi)
-    //             {
-    //                 if (existingRecords.TryGetValue(apiRec.id, out var existing))
-    //                 {
-    //                     // --- UPDATE ---
-    //                     existing.name = apiRec.name;
-    //                     existing.data = apiRec.data; 
-    //                     existing.UpdatedAt = DateTime.UtcNow; 
-                        
-    //                     updatedCount++;
-    //                 }
-    //                 else
-    //                 {
-    //                     // --- INSERT ---
-    //                     apiRec.UpdatedAt = DateTime.UtcNow;
-    //                     db.RestfulApiRecords.Add(apiRec);
-    //                     createdCount++;
-    //                 }
-    //             }
-
-    //             // 4. Saving all changes in a single transaction
-    //             await db.SaveChangesAsync();
-
-    //             return Results.Ok(new 
-    //             { 
-    //                 Status = "Success", 
-    //                 TotalFetched = dataFromApi.Count, 
-    //                 Updated = updatedCount, 
-    //                 Created = createdCount,
-    //                 Timestamp = DateTime.UtcNow 
-    //             });
-    //         }
-    //         catch (Exception ex)
-    //         {
-    //             // Logging the error (consider adding ILogger in the parameters if needed)
-    //             return Results.Problem($"An error occurred during synchronization: {ex.Message}");
-    //         }
-    //     })
-    //     .WithName("TriggerSync");
-
-    //     // GET /sync/data - Allows quickly previewing what's in the database
-    //     group.MapGet("/data", async ([FromServices] AppDbContext db) => 
-    //     {
-    //         var records = await db.RestfulApiRecords.OrderByDescending(r => r.id).Take(100).ToListAsync();
-    //         return Results.Ok(records);
-    //     })
-    //     .WithName("GetStoredData");
-    // }
-}
+//             return Results.Ok(new
+//             {
+//                 Message = "Cat fact and image saved.",
+//                 Fact = fact,
+//                 Image = image
+//             });
+//         })
+//         .WithName("SyncAndSave");
+//     }
+// }

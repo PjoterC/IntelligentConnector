@@ -12,12 +12,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddHttpClient<IPublicApiConnector, PublicApiConnector>(client =>
+builder.Services.AddHttpClient("CatFactsApi", client =>
 {
-    client.BaseAddress = new Uri("https://api.restful-api.dev/");
+    client.BaseAddress = new Uri("https://uselessfacts.jsph.pl/");
     client.Timeout = TimeSpan.FromSeconds(30);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+builder.Services.AddHttpClient("CatImagesApi", client =>
+{
+    client.BaseAddress = new Uri("https://cataas.com/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+    
+});
+
+builder.Services.AddScoped<IPublicApiConnector, PublicApiConnector>();
+
+
 
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -35,7 +46,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapSyncEndpoints();
+app.MapCatEndpoints();
 
 
 app.Run();

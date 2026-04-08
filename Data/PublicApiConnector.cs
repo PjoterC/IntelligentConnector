@@ -1,59 +1,65 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using IntelligentConnector.Core.Models;
 using IntelligentConnector.Core.Interfaces;
-using System.Diagnostics;
-using System.Text.Json;
+using IntelligentConnector.Core.Models;
 
 namespace IntelligentConnector.Data;
-public class PublicApiConnector(HttpClient httpClient) : IPublicApiConnector
+
+public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicApiConnector
 {
-    public async Task<CatFact> GetExternalDataAsync()
+    private const string CatFactsClientName = "CatFactsApi";
+    private const string CatImagesClientName = "CatImagesApi";
+
+    public async Task<CatFact> GetCatFactAsync()
     {
+        var client = httpClientFactory.CreateClient(CatFactsClientName);
+
         try
         {
-            using var response = await httpClient.GetAsync("objects");
-                   
+            using var response = await client.GetAsync("/api/v2/facts/random");
             if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine($"API request failed: {(int)response.StatusCode} {response.ReasonPhrase}");
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                {
-                    Console.WriteLine("Unauthorized access to external API. Check API key or credentials.");
-                }
-                return new List<RestfulApiRecord>();
-                
+                LogRequestFailure(response.StatusCode, response.ReasonPhrase);
+                return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
             }
-            var content = await response.Content.ReadAsStringAsync();
-            //Console.WriteLine($"Response content: {content}");
-            var jsonDoc = JsonDocument.Parse(content);
-            if (jsonDoc.RootElement.ValueKind == JsonValueKind.Object)
-            {
-                Console.WriteLine("Received JSON object instead of array. Wrapping in array.");
-                var wrappedContent = $"[{content}]";
-                return JsonSerializer.Deserialize<List<RestfulApiRecord>>(wrappedContent) ?? new List<RestfulApiRecord>();
-            }
-            return await response.Content.ReadFromJsonAsync<List<RestfulApiRecord>>() ?? new List<RestfulApiRecord>();
-        }
-        catch (HttpRequestException ex)
-        {
-            Console.WriteLine($"HTTP request error: {ex.Message}");
-            return new List<RestfulApiRecord>();
-        }
-        catch (TaskCanceledException ex)
-        {
-            Console.WriteLine($"Request timed out: {ex.Message}");
-            return new List<RestfulApiRecord>();
-        }
-        catch (JsonException ex)
-        {
-            Console.WriteLine($"JSON parsing error: {ex.Message}");
-            return new List<RestfulApiRecord>();
+
+            return await response.Content.ReadFromJsonAsync<CatFact>() ?? new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Unexpected error: {ex.Message}");
-            return new List<RestfulApiRecord>();
+            Console.WriteLine($"Error while fetching cat fact: {ex.Message}");
+            return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
+        }
+    }
+//
+    public async Task<CatImage> GetCatImageAsync(CatFact fact)
+    {
+        var client = httpClientFactory.CreateClient(CatImagesClientName);
+
+        //hello?fontSize=50&fontColor=white
+        int length = fact.Length;
+        var fontSize = length > 40 ? 25 : 50;
+        
+
+        string requestUrl = $"cat/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white";
+        try
+        {
+            var imageStream = await client.GetStreamAsync(requestUrl);
+            return new CatImage { ImageStream = imageStream };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while fetching cat image: {ex.Message}");
+            return new CatImage();
+        }
+    }
+
+    private static void LogRequestFailure(HttpStatusCode statusCode, string? reasonPhrase)
+    {
+        Console.WriteLine($"API request failed: {(int)statusCode} {reasonPhrase}");
+        if (statusCode == HttpStatusCode.Unauthorized)
+        {
+            Console.WriteLine("Unauthorized access to external API. Check API key or credentials.");
         }
     }
 }
