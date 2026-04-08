@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: db_symfonia
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: symfonia
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
