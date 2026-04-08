@@ -2,6 +2,7 @@
 using System.Net.Http.Json;
 using IntelligentConnector.Core.Interfaces;
 using IntelligentConnector.Core.Models;
+using SixLabors.ImageSharp;
 
 namespace IntelligentConnector.Data;
 
@@ -58,28 +59,48 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
 
 
     public async Task<CatImage> GetCatImageAsync(CatFact fact, CatImageData imageData)
+{
+    var client = httpClientFactory.CreateClient(CatImagesClientName);
+
+    var bytes = await client.GetByteArrayAsync($"cat/{imageData.Id}");
+    var fontSize = 20; // Default font size
+
+    // Font based on image width to ensure text fits reasonably well, with a minimum size
+    var byteImage = Image.Identify(bytes);
+    if (byteImage != null)
     {
-        var client = httpClientFactory.CreateClient(CatImagesClientName);
-
-        //hello?fontSize=50&fontColor=white
-
-        // Todo: Adjust font size better
-        int length = fact.Length;
-        var fontSize = length > 40 ? 25 : 50;
+        int width = byteImage.Width;
         
-
-        string requestUrl = $"cat/{imageData.Id}/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white";
-        try
-        {
-            var imageStream = await client.GetStreamAsync(requestUrl);
-            return new CatImage { ImageStream = imageStream };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error while fetching cat image: {ex.Message}");
-            return new CatImage();
-        }
+        fontSize = width / 40; 
     }
+
+    string requestUrl = $"cat/{imageData.Id}/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white&width>400";
+    try
+    {
+        // Read the image as a byte array and return it as a stream to avoid issues with content type and encoding
+        var response = await client.GetAsync(requestUrl);
+        response.EnsureSuccessStatusCode();
+        
+        var finalBytes = await response.Content.ReadAsByteArrayAsync();
+        return new CatImage { ImageStream = new MemoryStream(finalBytes) };
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"API Error, returning fallback image: {ex.Message}");
+
+        // Path to the local fallback file
+        string fallbackPath = Path.Combine(AppContext.BaseDirectory, "apidown.jpg");
+
+        if (File.Exists(fallbackPath))
+        {
+            var fallbackStream = File.OpenRead(fallbackPath);
+            return new CatImage { ImageStream = fallbackStream };
+        }
+
+        // If even the file doesn't exist, return an empty stream (last resort)
+        return new CatImage { ImageStream = Stream.Null };
+    }
+}
 
     private static void LogRequestFailure(HttpStatusCode statusCode, string? reasonPhrase)
     {

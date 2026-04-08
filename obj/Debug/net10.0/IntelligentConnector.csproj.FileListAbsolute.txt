@@ -121,3 +121,4 @@ C:\Users\piotr\Desktop\symfonia_app2\IntelligentConnector\obj\Debug\net10.0\Inte
 C:\Users\piotr\Desktop\symfonia_app2\IntelligentConnector\obj\Debug\net10.0\IntelligentConnector.genruntimeconfig.cache
 C:\Users\piotr\Desktop\symfonia_app2\IntelligentConnector\obj\Debug\net10.0\ref\IntelligentConnector.dll
 C:\Users\piotr\Desktop\symfonia_app2\IntelligentConnector\obj\Debug\net10.0\IntelligentConnector.sourcelink.json
+C:\Users\piotr\Desktop\symfonia_app2\IntelligentConnector\bin\Debug\net10.0\SixLabors.ImageSharp.dll

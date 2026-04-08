@@ -17,30 +17,52 @@ public static class CatEndpoints
         {
             var existingRecords = await db.CatFacts.ToListAsync();
             var existingIDs = existingRecords.Select(r => r.Id).ToHashSet();
+            
+            var existingCatIDs = await db.CatImages.Select(i => i.Id).ToListAsync();
+            var imageData = await connector.GetCatImageDataAsync();
+
+            // Attempt to use a new cat
+            int catAttempts = 0;
+            const int maxCatAttempts = 5;
+            while (existingCatIDs.Contains(imageData.Id) && catAttempts < maxCatAttempts)
+            {
+                imageData = await connector.GetCatImageDataAsync();
+                catAttempts++;
+            }
+
+            if (!existingCatIDs.Contains(imageData.Id))
+            {
+                db.CatImages.Add(imageData);
+                await db.SaveChangesAsync();
+            }
+            
+
 
             var fact = await connector.GetCatFactAsync();
-            int attempts = 0;
             
-            const int maxAttempts = 3;
+            // Attempt to get a new fact if the ID already exists, up to a certain number of attempts
+            int factAttempts = 0;
+            const int maxFactAttempts = 3;
             while (existingIDs.Contains(fact.Id))
             {
                 fact = await connector.GetCatFactAsync();
-                if (++attempts >= maxAttempts)
+                if (++factAttempts >= maxFactAttempts)
                 {
                     db.CatFacts.RemoveRange(existingRecords);
                     await db.SaveChangesAsync();
                     fact.Text = "You wanted to remember more facts than a mere mortal can handle, so I purged your memory.";
-                    var img = await connector.GetCatImageAsync(fact);
+                    var img = await connector.GetCatImageAsync(fact,imageData);
                     return Results.File(img.ImageStream, "image/png");
                     
                 }
                 
             }
-            fact.Length = fact.Text.Length;
+            
+            fact.CatImageId = imageData.Id;
             db.CatFacts.Add(fact);
             await db.SaveChangesAsync();
 
-            var image = await connector.GetCatImageAsync(fact);
+            var image = await connector.GetCatImageAsync(fact, imageData);
             return Results.File(image.ImageStream, "image/png");
 
 
@@ -52,13 +74,16 @@ public static class CatEndpoints
             var existingRecords = await db.CatFacts.ToListAsync();
             if (!existingRecords.Any())
             {
-                var fact = new CatFact("0", "You haven't asked for any cat facts yet, so I have nothing to remember.");
-                var img = await connector.GetCatImageAsync(fact);
+                var fact = new CatFact("0", "You haven't asked for any cat facts yet, so I have nothing to remember.", "p4wVprNdce0EzbGl");
+                var imgData = await connector.GetCatImageDataAsync();
+                var img = await connector.GetCatImageAsync(fact, imgData);
                 return Results.File(img.ImageStream, "image/png");
             }
             var random = new Random();
             var factToRemember = existingRecords[random.Next(existingRecords.Count)];
-            var image = await connector.GetCatImageAsync(factToRemember);
+
+            var imageData = new CatImageData { Id = factToRemember.CatImageId };
+            var image = await connector.GetCatImageAsync(factToRemember, imageData);
             return Results.File(image.ImageStream, "image/png");
         }).WithName("RememberCatFact");
 
@@ -69,42 +94,3 @@ public static class CatEndpoints
     }
 }
 
-// public static class SyncEndpoints
-// {
-//     public static void MapSyncEndpoints(this IEndpointRouteBuilder app)
-//     {
-//         var group = app.MapGroup("/sync");
-
-//         group.MapGet("/fact", async ([FromServices] IPublicApiConnector connector) =>
-//         {
-//             var fact = await connector.GetCatFactAsync();
-//             return Results.Ok(fact);
-//         })
-//         .WithName("GetCatFact");
-
-//         group.MapGet("/image", async ([FromServices] IPublicApiConnector connector) =>
-//         {
-//             var image = await connector.GetCatImageAsync();
-//             return Results.Ok(image);
-//         })
-//         .WithName("GetCatImage");
-
-//         group.MapPost("/save", async ([FromServices] IPublicApiConnector connector, [FromServices] AppDbContext db) =>
-//         {
-//             var fact = await connector.GetCatFactAsync();
-//             var image = await connector.GetCatImageAsync();
-
-//             db.CatFacts.Add(fact);
-//             db.CatImages.Add(image);
-//             await db.SaveChangesAsync();
-
-//             return Results.Ok(new
-//             {
-//                 Message = "Cat fact and image saved.",
-//                 Fact = fact,
-//                 Image = image
-//             });
-//         })
-//         .WithName("SyncAndSave");
-//     }
-// }
