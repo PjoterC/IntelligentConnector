@@ -20,28 +20,55 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
             if (!response.IsSuccessStatusCode)
             {
                 LogRequestFailure(response.StatusCode, response.ReasonPhrase);
-                return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
+                return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?", "p4wVprNdce0EzbGl");
             }
 
-            return await response.Content.ReadFromJsonAsync<CatFact>() ?? new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
+            return await response.Content.ReadFromJsonAsync<CatFact>() ?? new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?", "p4wVprNdce0EzbGl");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error while fetching cat fact: {ex.Message}");
-            return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?");
+            return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?", "p4wVprNdce0EzbGl");
         }
     }
 //
-    public async Task<CatImage> GetCatImageAsync(CatFact fact)
+    public async Task<CatImageData> GetCatImageDataAsync()
+    {
+        var client = httpClientFactory.CreateClient(CatImagesClientName);
+
+        try
+        {
+            using var response = await client.GetAsync("/cat?json=true");
+            if (!response.IsSuccessStatusCode)
+            {
+                LogRequestFailure(response.StatusCode, response.ReasonPhrase);
+                return new CatImageData { Id = string.Empty };
+            }
+
+            var data = await response.Content.ReadFromJsonAsync<CatImageData>();
+            return new CatImageData { Id = data?.Id ?? string.Empty };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error while fetching cat image data: {ex.Message}");
+            return new CatImageData { Id = string.Empty };
+
+        }
+    }
+
+
+    public async Task<CatImage> GetCatImageAsync(CatFact fact, CatImageData imageData)
     {
         var client = httpClientFactory.CreateClient(CatImagesClientName);
 
         //hello?fontSize=50&fontColor=white
+
+        // Todo: Adjust font size better
         int length = fact.Length;
         var fontSize = length > 40 ? 25 : 50;
         
 
-        string requestUrl = $"cat/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white";
+        string requestUrl = $"cat/{imageData.Id}/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white";
         try
         {
             var imageStream = await client.GetStreamAsync(requestUrl);

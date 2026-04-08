@@ -5,5 +5,9 @@ namespace IntelligentConnector.Core.Interfaces;
 public interface IPublicApiConnector
 {
     Task<CatFact> GetCatFactAsync();
-    Task<CatImage> GetCatImageAsync(CatFact fact);
+
+    Task<CatImageData> GetCatImageDataAsync();
+    Task<CatImage> GetCatImageAsync(CatFact fact, CatImageData imageData);
+
+    
 }
