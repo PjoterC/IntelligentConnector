@@ -43,8 +43,22 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    
-    await dbContext.Database.MigrateAsync();
+    int retries = 5;
+    while (retries > 0)
+    {
+        try
+        {
+            await dbContext.Database.MigrateAsync();
+            break; 
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            Console.WriteLine($"Database not ready yet... Retrying ({retries} attempts left). Error: {ex.Message}");
+            if (retries == 0) throw;
+            await Task.Delay(2000); // Wait before retrying
+        }
+    }
 }
 
 
