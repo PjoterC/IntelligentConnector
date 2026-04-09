@@ -48,7 +48,15 @@ using (var scope = app.Services.CreateScope())
     {
         try
         {
-            await dbContext.Database.MigrateAsync();
+            if (dbContext.Database.IsRelational())
+            {
+                await dbContext.Database.MigrateAsync();
+            }
+            else
+            {
+                // For testing with InMemory or other non-relational databases, ensure it's created
+                await dbContext.Database.EnsureCreatedAsync();
+            }
             break; 
         }
         catch (Exception ex)
