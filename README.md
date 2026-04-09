@@ -47,7 +47,7 @@ The application is designed to work even if those requests are never sent, howev
 ## Tests
 The application contains a few automatic tests, that can be run using command **dotnet test** in app directory. To see what specific tests do, check `IntelligentConnector.ScenarioTests/CatEndpointScenarioTests.cs`
 
-**NOTE:** Unlike the tests, the app itself will work properly if you have no internet connection at the time.
+**NOTE:** Unlike the tests, the app itself will not work properly if you have no internet connection at the time.
 
 ---
 
