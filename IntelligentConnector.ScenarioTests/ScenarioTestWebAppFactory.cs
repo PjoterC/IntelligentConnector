@@ -8,13 +8,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace IntelligentConnector.ScenarioTests;
 
-/// <summary>
-/// Custom WebApplicationFactory that:
-///   - replaces PostgreSQL with an isolated in-memory database
-///   - replaces the real HTTP-based connector with a predictable fake
-///   - disables HTTPS redirection so the test HTTP client works without TLS
-/// Each factory instance gets its own in-memory database, so tests are isolated.
-/// </summary>
+
+//Custom WebApplicationFactory that:
+//  - replaces PostgreSQL with an isolated in-memory database
+//  - replaces the real HTTP-based connector with a predictable fake
+//  - disables HTTPS redirection so the test HTTP client works without TLS
+//Each factory instance gets its own in-memory database, so tests are isolated.
+
 public class ScenarioTestWebAppFactory : WebApplicationFactory<Program>
 {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -23,13 +23,7 @@ public class ScenarioTestWebAppFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // ── Replace the real Npgsql DbContext with an in-memory one ──────────
-            // AddDbContext registers several generic descriptors (options, options-
-            // configuration, factories) all parameterised with AppDbContext.
-            // Removing only DbContextOptions<T> leaves Npgsql's configuration
-            // delegate in place, causing a "two providers" conflict.
-            // The safest fix: remove every descriptor whose ServiceType is, or is
-            // a closed generic of AppDbContext, then re-add cleanly.
+            //Replace the real Npgsql DbContext with an in-memory one
             var toRemove = services
                 .Where(d =>
                     d.ServiceType == typeof(AppDbContext) ||
@@ -39,12 +33,12 @@ public class ScenarioTestWebAppFactory : WebApplicationFactory<Program>
             foreach (var d in toRemove)
                 services.Remove(d);
 
-            // Unique name per factory instance → fully isolated DB per test
+            // Unique name per factory instance - fully isolated DB per test
             var dbName = $"TestDb_{Guid.NewGuid()}";
             services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase(dbName));
 
-            // ── Replace the real API connector with a fast, deterministic fake ──
+            //Replace the real API connector with a fast, deterministic fake
             var connectorDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(IPublicApiConnector));
             if (connectorDescriptor is not null)
@@ -52,16 +46,15 @@ public class ScenarioTestWebAppFactory : WebApplicationFactory<Program>
 
             services.AddScoped<IPublicApiConnector, FakePublicApiConnector>();
 
-            // ── Disable HTTPS redirection so test HTTP client receives 200, not 307 ──
+            //Disable HTTPS redirection so test HTTP client receives 200, not 307
             services.Configure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(
                 opt => opt.HttpsPort = null);
         });
     }
 }
 
-/// <summary>
-/// Returns fixed, deterministic data instead of making real network calls.
-/// </summary>
+
+//Returns fixed, deterministic data instead of making real network calls.
 public class FakePublicApiConnector : IPublicApiConnector
 {
     // Minimal valid 1×1 PNG – keeps test payload tiny

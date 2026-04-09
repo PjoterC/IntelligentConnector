@@ -47,7 +47,7 @@ The application is designed to work even if those requests are never sent, howev
 ## Tests
 The application contains a few automatic tests, that can be run using command **dotnet test** in app directory. To see what specific tests do, check `IntelligentConnector.ScenarioTests/CatEndpointScenarioTests.cs`
 
-**NOTE:** Neither tests nor the app itself will work properly if you have no internet connection at the time.
+**NOTE:** Unlike the tests, the app itself will work properly if you have no internet connection at the time.
 
 ---
 
@@ -100,4 +100,4 @@ Aplikacja została zaprojektowana tak, aby działała nawet jeśli te żądania 
 ## Testy
 Aplikacja zawiera kilka testów automatycznych, które można uruchomić za pomocą komendy **dotnet test** w katalogu aplikacji. Aby sprawdzić, co robią konkretne testy, zajrzyj do pliku `IntelligentConnector.ScenarioTests/CatEndpointScenarioTests.cs`
 
-**UWAGA:** Ani testy, ani sama aplikacja nie będą działać poprawnie, jeśli w danym momencie nie masz połączenia z Internetem.
+**UWAGA:** W przeciwieństwie do testów, sama aplikacja nie będzie działać poprawnie, jeśli w danym momencie nie masz połączenia z Internetem.
