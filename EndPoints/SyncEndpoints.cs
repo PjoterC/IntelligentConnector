@@ -88,9 +88,22 @@ public static class CatEndpoints
         }).WithName("RememberCatFact");
 
 
-        
-
-        
+        group.MapDelete("/clearfacts", async ([FromServices] AppDbContext db) =>
+        {
+            var allFacts = await db.CatFacts.ToListAsync();
+            db.CatFacts.RemoveRange(allFacts);
+            await db.SaveChangesAsync();
+            return Results.Ok("All cat facts cleared from memory.");
+        }).WithName("ClearCatFacts");
+        group.MapDelete("/clearimages", async ([FromServices] AppDbContext db) =>
+        {
+            var allImages = await db.CatImages.ToListAsync();
+            db.CatImages.RemoveRange(allImages);
+            await db.SaveChangesAsync();
+            return Results.Ok("All cat images cleared from memory.");
+        }).WithName("ClearCatImages");
     }
+
+
 }
 

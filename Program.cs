@@ -51,3 +51,6 @@ app.MapCatEndpoints();
 
 app.Run();
 
+// Needed so WebApplicationFactory<Program> in the test project can see this class
+public partial class Program { }
+

@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using IntelligentConnector.Core.Interfaces;
 using IntelligentConnector.Core.Models;
 using SixLabors.ImageSharp;

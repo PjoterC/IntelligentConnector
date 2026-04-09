@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="IntelligentConnector.ScenarioTests\**" />
+    <Content Remove="IntelligentConnector.ScenarioTests\**" />
+    <EmbeddedResource Remove="IntelligentConnector.ScenarioTests\**" />
+    <None Remove="IntelligentConnector.ScenarioTests\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
