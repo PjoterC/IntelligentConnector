@@ -1,7 +1,5 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+
 using IntelligentConnector.Core.Interfaces;
-using IntelligentConnector.Core.Models;
 using IntelligentConnector.Data;
 using Microsoft.EntityFrameworkCore;
 using IntelligentConnector.Endpoints;
@@ -83,6 +81,4 @@ app.MapCatEndpoints();
 
 app.Run();
 
-// Needed so WebApplicationFactory<Program> in the test project can see this class
-//public partial class Program { }
 

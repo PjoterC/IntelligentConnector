@@ -2,20 +2,6 @@
 
 namespace IntelligentConnector.Core.Models;
 
-public class PublicApiResponse
-{
-    public int Count { get; set; }
-    public List<ApiEntry> Entries { get; set; } = new();
-}
-
-public class ApiEntry
-{
-    public string Api { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string Link { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
-    public bool IsHttps { get; set; }
-}
 
 
 

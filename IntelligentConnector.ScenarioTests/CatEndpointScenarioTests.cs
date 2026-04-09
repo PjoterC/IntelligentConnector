@@ -3,7 +3,7 @@ using Xunit;
 
 namespace IntelligentConnector.ScenarioTests;
 
-/// <summary>
+
 /// Scenario tests for the /cat endpoints.
 ///
 /// Each test creates its own ScenarioTestWebAppFactory so it gets a fresh,
@@ -12,11 +12,12 @@ namespace IntelligentConnector.ScenarioTests;
 /// Run manually:
 ///   dotnet test  (from the solution root)
 ///   dotnet test IntelligentConnector.ScenarioTests  (project only)
-/// </summary>
+
+
 public class CatEndpointScenarioTests
 {
     // ── /cat/newfact ──────────────────────────────────────────────────────────
-
+    // Tests if the image is returned properly by the fact endpoint
     [Fact]
     public async Task NewFact_ReturnsOkAndImage()
     {
@@ -29,12 +30,11 @@ public class CatEndpointScenarioTests
         Assert.Equal("image/png", response.Content.Headers.ContentType?.MediaType);
     }
 
+    // Tests if multiple calls will work and return images each time 
     [Fact]
     public async Task NewFact_CalledTwice_BothReturnImages()
     {
-        // The fake connector always returns the same fact/image IDs.
-        // The second call triggers the "already exists" retry loop and
-        // ultimately purges old facts – the endpoint must still return an image.
+        
         await using var factory = new ScenarioTestWebAppFactory();
         var client = factory.CreateClient();
 
@@ -48,7 +48,7 @@ public class CatEndpointScenarioTests
     }
 
     // ── /cat/rememberfact ────────────────────────────────────────────────────
-
+    // Tests if the remembering endpoint returns an image, even if no facts were stored yet
     [Fact]
     public async Task RememberFact_WithNoFactsStored_ReturnsImage()
     {
@@ -62,6 +62,7 @@ public class CatEndpointScenarioTests
         Assert.Equal("image/png", response.Content.Headers.ContentType?.MediaType);
     }
 
+    // Tests if the facts are stored and remembered properly
     [Fact]
     public async Task RememberFact_AfterGettingNewFact_ReturnsImage()
     {
@@ -79,7 +80,7 @@ public class CatEndpointScenarioTests
     }
 
     // ── /cat/clearfacts ───────────────────────────────────────────────────────
-
+    // Tests if the clearing endpoint works and returns a confirmation message
     [Fact]
     public async Task ClearFacts_ReturnsOkWithConfirmationMessage()
     {
@@ -94,7 +95,7 @@ public class CatEndpointScenarioTests
     }
 
     // ── Full workflow ─────────────────────────────────────────────────────────
-
+    // Tests the full workflow of getting a new fact, remembering it, clearing facts, and remembering again
     [Fact]
     public async Task FullWorkflow_GetNewFact_Remember_Clear_Remember()
     {

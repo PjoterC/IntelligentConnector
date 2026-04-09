@@ -12,6 +12,7 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
     private const string CatFactsClientName = "CatFactsApi";
     private const string CatImagesClientName = "CatImagesApi";
 
+    // returns cat fact
     public async Task<CatFact> GetCatFactAsync()
     {
         var client = httpClientFactory.CreateClient(CatFactsClientName);
@@ -33,7 +34,7 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
             return new CatFact(" ", "I failed to fetch your fact. Maybe the cat is sleeping on the API server?", "p4wVprNdce0EzbGl");
         }
     }
-//
+    // Returns cat image json data
     public async Task<CatImageData> GetCatImageDataAsync()
     {
         var client = httpClientFactory.CreateClient(CatImagesClientName);
@@ -58,22 +59,14 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
         }
     }
 
-
+    //returns cat image with the fact text drawn on it
     public async Task<CatImage> GetCatImageAsync(CatFact fact, CatImageData imageData)
 {
     var client = httpClientFactory.CreateClient(CatImagesClientName);
 
     var bytes = await client.GetByteArrayAsync($"cat/{imageData.Id}");
-    var fontSize = 20; // Default font size
 
-    // Font based on image width to ensure text fits reasonably well, with a minimum size
-    var byteImage = Image.Identify(bytes);
-    if (byteImage != null)
-    {
-        int width = byteImage.Width;
-        
-        fontSize = width / 40; 
-    }
+    
 
     string requestUrl = $"cat/{imageData.Id}";
     try
@@ -82,7 +75,7 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
         var response = await client.GetAsync(requestUrl);
         response.EnsureSuccessStatusCode();
         
-        //var finalBytes = await response.Content.ReadAsByteArrayAsync();
+   
         var finalStream = await ModifyImageLocally(await response.Content.ReadAsStreamAsync(), fact.Text);
         return new CatImage { ImageStream = finalStream };
     }
