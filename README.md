@@ -19,6 +19,8 @@ Open cmd/terminal/powershell in the app directory
 
 Type in command **docker-compose up -d** - this will pull a PostgreSQL database image to docker and create the necessary container. The database will be running on port 5432:5432 and will start automatically. The application has all the necessary login data hard-coded in `📁Data/DbContextFactory.cs`, since this project is not to be deployed anyway.
 
+__NOTE:__ Keep in mind that since it handles database, containter is set to restart automatically. If it bothers you, change the docker-compose.yml
+
 After the container is running, the application should be started with command **dotnet run** again in the app directory. It should run on http://localhost:5146 but just in case, you can check the address in the terminal output.
 
 ## Communicating via requests
@@ -69,6 +71,8 @@ Otwórz cmd/terminal/powershell w katalogu aplikacji
 (`📁IntelligentConnector/`)
 
 Wpisz komendę **docker-compose up -d** – spowoduje to pobranie obrazu bazy danych PostgreSQL do dockera i utworzenie niezbędnego kontenera. Baza danych będzie działać na porcie 5432:5432 i uruchomi się automatycznie. Aplikacja ma wszystkie niezbędne dane logowania wpisane na sztywno w pliku `📁Data/DbContextFactory.cs`, ponieważ projekt i tak nie jest przeznaczony do wdrożenia (deploymentu).
+
+**UWAGA:** Ponieważ odpowiada za bazę danych, kontener jest ustawiony by włączać się automatycznie. Jeśli ci to przeszkadza, zmień ustawienia w docker-compose.yml
 
 Po uruchomieniu kontenera aplikację należy uruchomić komendą **dotnet run**, ponownie w katalogu aplikacji. Powinna ona działać pod adresem http://localhost:5146, ale na wszelki wypadek możesz sprawdzić adres w danych wyjściowych terminala.
 
