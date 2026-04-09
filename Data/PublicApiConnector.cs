@@ -2,7 +2,9 @@
 using IntelligentConnector.Core.Interfaces;
 using IntelligentConnector.Core.Models;
 using SixLabors.ImageSharp;
-
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.Drawing.Processing;
 namespace IntelligentConnector.Data;
 
 public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicApiConnector
@@ -73,15 +75,16 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
         fontSize = width / 40; 
     }
 
-    string requestUrl = $"cat/{imageData.Id}/says/{Uri.EscapeDataString(fact.Text)}?fontSize={fontSize}&fontColor=white&width>400";
+    string requestUrl = $"cat/{imageData.Id}";
     try
     {
         // Read the image as a byte array and return it as a stream to avoid issues with content type and encoding
         var response = await client.GetAsync(requestUrl);
         response.EnsureSuccessStatusCode();
         
-        var finalBytes = await response.Content.ReadAsByteArrayAsync();
-        return new CatImage { ImageStream = new MemoryStream(finalBytes) };
+        //var finalBytes = await response.Content.ReadAsByteArrayAsync();
+        var finalStream = await ModifyImageLocally(await response.Content.ReadAsStreamAsync(), fact.Text);
+        return new CatImage { ImageStream = finalStream };
     }
     catch (Exception ex)
     {
@@ -100,6 +103,37 @@ public class PublicApiConnector(IHttpClientFactory httpClientFactory) : IPublicA
         return new CatImage { ImageStream = Stream.Null };
     }
 }
+
+// For font formatting
+public async Task<Stream> ModifyImageLocally(Stream imageStream, string text)
+{
+    using var image = await Image.LoadAsync(imageStream);
+    
+    
+    var font = SystemFonts.CreateFont("Impact", image.Width / 12);
+
+    image.Mutate(x => {
+        var options = new RichTextOptions(font) {
+            Origin = new PointF(image.Width / 2f, image.Height - 50f), 
+            WrappingLength = image.Width - 40,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom
+        };
+        
+        
+        x.DrawText(options, text, Color.White);
+    });
+
+    var output = new MemoryStream();
+    await image.SaveAsPngAsync(output);
+    output.Position = 0;
+    return output;
+}
+
+
+
+
+
 
     private static void LogRequestFailure(HttpStatusCode statusCode, string? reasonPhrase)
     {
